@@ -25,7 +25,7 @@ export default class App extends Component {
   turnOn = () => {
     if (Platform.OS == 'ios') {
       NativeModules.ImageDetail.turnOn(
-        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/icons/fruits/vegetable-3d-tomatto.png`,
+        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/icons/fruits/vegetable-3d-corn.png`,
       );
       this.updateStatus();
     } else if (Platform.OS == 'android') {

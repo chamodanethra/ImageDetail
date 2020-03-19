@@ -1,4 +1,5 @@
 package com.imageprocessing;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -20,7 +21,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ImageDetail extends ReactContextBaseJavaModule  {
+public class ImageDetail extends ReactContextBaseJavaModule {
 
     public ImageDetail(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -71,22 +72,11 @@ public class ImageDetail extends ReactContextBaseJavaModule  {
         } catch (IOException e) {
             promise.reject(e);
         }
-
-        // HashMap<String, Integer> hm = new HashMap<>();
-        // hm.put("startX", startX);
-        // hm.put("startY", startY);
-        // hm.put("endX", endX);
-        // hm.put("endY", endY);
-        //
-        // for (Map.Entry<String, Integer> entry : hm.entrySet()) {
-        // map.putInt(entry.getKey(), entry.getValue());
-        // }
-
     }
+
     @Override
     public String getName() {
         return "ImageDetail";
     }
 
 }
-
