@@ -16,12 +16,19 @@ import {
   Platform,
 } from 'react-native';
 
+const objects = ['1', '2', '3', '4', '5'];
+
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {boundaryCoordinates: {}};
-    this.turnOn();
+    this.state = {boundaryCoordinates: {}, boundaryCoordinatesArray: []};
   }
+
+  componentDidMount() {
+    this.turnOn();
+    console.log(this.state.boundaryCoordinatesArray);
+  }
+
   turnOn = () => {
     if (Platform.OS == 'ios') {
       NativeModules.ImageDetail.turnOn(
@@ -29,20 +36,32 @@ export default class App extends Component {
       );
       this.updateStatus();
     } else if (Platform.OS == 'android') {
-      let object = 'vegetable-3d-tomatto';
-      NativeModules.ImageDetail.turnOn(
-        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/icons/fruits/${object}.png`,
-      )
-        .then(boundaryCoordinates => {
-          // console.log(boundaryCoordinates.startX);
-          // console.log(boundaryCoordinates.startY);
-          // console.log(boundaryCoordinates.endX);
-          // console.log(boundaryCoordinates.endY);
-          this.setState({boundaryCoordinates});
-        })
-        .catch(err => {
-          console.error(err);
-        });
+      var boundaryCoordinatesArray = [];
+      objects.forEach((object, index) => {
+        NativeModules.ImageDetail.turnOn(
+          `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/car-assemble/${object}.png`,
+        )
+          .then(boundaryCoordinates => {
+            // console.log(boundaryCoordinates.startX);
+            // console.log(boundaryCoordinates.startY);
+            // console.log(boundaryCoordinates.endX);
+            // console.log(boundaryCoordinates.endY);
+            boundaryCoordinatesArray.push(boundaryCoordinates);
+            console.log(boundaryCoordinatesArray);
+
+            this.setState(prevState => {
+              return {
+                boundaryCoordinatesArray: [
+                  ...prevState.boundaryCoordinatesArray,
+                  {boundaryCoordinates},
+                ],
+              };
+            });
+          })
+          .catch(err => {
+            console.error(err);
+          });
+      });
     }
   };
 
@@ -54,7 +73,31 @@ export default class App extends Component {
   }
 
   render() {
-    return (
+    console.log('boundaryCoordinates ', this.state.boundaryCoordinatesArray[0]);
+    return Platform.OS == 'android' ? (
+      <View style={styles.container}>
+        {this.state.boundaryCoordinatesArray.map(element => (
+          <View>
+            <Text style={styles.welcome}>Welcome to Light App!!</Text>
+            <Text style={styles.welcome}>
+              {element.boundaryCoordinates.startX}
+            </Text>
+            <Text style={styles.welcome}>
+              {' '}
+              {element.boundaryCoordinates.startY}
+            </Text>
+            <Text style={styles.welcome}>
+              {' '}
+              {element.boundaryCoordinates.endX}
+            </Text>
+            <Text style={styles.welcome}>
+              {' '}
+              {element.boundaryCoordinates.endY}
+            </Text>
+          </View>
+        ))}
+      </View>
+    ) : (
       <View style={styles.container}>
         <Text style={styles.welcome}>Welcome to Light App!!</Text>
         <Text> {this.state.boundaryCoordinates.startX}</Text>
