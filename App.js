@@ -12,8 +12,9 @@ import {
   Text,
   View,
   NativeModules,
-  Button,
   Platform,
+  Image,
+  Dimensions,
 } from 'react-native';
 
 const objects = ['1', '2', '3', '4', '5'];
@@ -21,24 +22,47 @@ const objects = ['1', '2', '3', '4', '5'];
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {boundaryCoordinates: {}, boundaryCoordinatesArray: []};
+    this.state = {
+      dimensionsArray: [],
+      cornerCoordinatesArray: [],
+      boundaryCoordinatesArray: [],
+    };
+    //console.log(Dimensions.get('window').width - 25 * 2);
   }
 
   componentDidMount() {
-    this.turnOn();
-    console.log(this.state.boundaryCoordinatesArray);
+    this.setImageURIs();
   }
 
-  turnOn = () => {
+  setImageURIs = () => {
     if (Platform.OS == 'ios') {
-      NativeModules.ImageDetail.turnOn(
-        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/icons/fruits/vegetable-3d-corn.png`,
+      NativeModules.ImageDetail.setImageURIs(
+        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/car-assemble/`,
       );
-      this.updateStatus();
+      NativeModules.ImageDetail.getSortedDimensions(
+        (error, dimensionsArray) => {
+          this.setState({
+            dimensionsArray,
+          });
+          console.log('dimensionsArray ', this.state.dimensionsArray);
+        },
+      );
+
+      NativeModules.ImageDetail.getSortedCornerCoordinates(
+        (error, cornerCoordinatesArray) => {
+          this.setState({
+            cornerCoordinatesArray,
+          });
+          console.log(
+            'cornerCoordinatesArray ',
+            this.state.cornerCoordinatesArray,
+          );
+        },
+      );
     } else if (Platform.OS == 'android') {
       var boundaryCoordinatesArray = [];
       objects.forEach((object, index) => {
-        NativeModules.ImageDetail.turnOn(
+        NativeModules.ImageDetail.setImageURIs(
           `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/car-assemble/${object}.png`,
         )
           .then(boundaryCoordinates => {
@@ -47,7 +71,7 @@ export default class App extends Component {
             // console.log(boundaryCoordinates.endX);
             // console.log(boundaryCoordinates.endY);
             boundaryCoordinatesArray.push(boundaryCoordinates);
-            console.log(boundaryCoordinatesArray);
+            // console.log(boundaryCoordinatesArray);
 
             this.setState(prevState => {
               return {
@@ -65,15 +89,7 @@ export default class App extends Component {
     }
   };
 
-  updateStatus() {
-    NativeModules.ImageDetail.getStatus((error, boundaryCoordinates) => {
-      this.setState({boundaryCoordinates: boundaryCoordinates});
-      //console.log('boundaryCoordinates ', this.state.boundaryCoordinates);
-    });
-  }
-
   render() {
-    console.log('boundaryCoordinates ', this.state.boundaryCoordinatesArray[0]);
     return Platform.OS == 'android' ? (
       <View style={styles.container}>
         {this.state.boundaryCoordinatesArray.map(element => (
@@ -83,15 +99,12 @@ export default class App extends Component {
               {element.boundaryCoordinates.startX}
             </Text>
             <Text style={styles.welcome}>
-              {' '}
               {element.boundaryCoordinates.startY}
             </Text>
             <Text style={styles.welcome}>
-              {' '}
               {element.boundaryCoordinates.endX}
             </Text>
             <Text style={styles.welcome}>
-              {' '}
               {element.boundaryCoordinates.endY}
             </Text>
           </View>
@@ -99,11 +112,45 @@ export default class App extends Component {
       </View>
     ) : (
       <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to Light App!!</Text>
-        <Text> {this.state.boundaryCoordinates.startX}</Text>
-        <Text> {this.state.boundaryCoordinates.startY}</Text>
-        <Text> {this.state.boundaryCoordinates.endX}</Text>
-        <Text> {this.state.boundaryCoordinates.endY}</Text>
+        <View style={{width: 215, height: 325, backgroundColor: 'red'}}>
+          {this.state.cornerCoordinatesArray.map((object, i) => (
+            // <View
+            //   key={i}
+            //   style={{
+            //     backgroundColor: 'red',
+            //     position: 'absolute',
+            //     top: object[1],
+            //     left: object[0],
+            //     height:
+            //       this.state.dimensionsArray[i][3] -
+            //       this.state.dimensionsArray[i][2],
+            //     width:
+            //       this.state.dimensionsArray[i][1] -
+            //       this.state.dimensionsArray[i][0],
+            //     resizeMode: 'contain',
+            //   }}>
+            <Image
+              key={i}
+              source={{
+                uri: `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/car-assemble/icon-${objects[i]}.png`,
+              }}
+              style={{
+                position: 'absolute',
+                top: object[1],
+                left: object[0],
+                height:
+                  this.state.dimensionsArray[i][3] -
+                  this.state.dimensionsArray[i][2],
+                width:
+                  this.state.dimensionsArray[i][1] -
+                  this.state.dimensionsArray[i][0],
+                resizeMode: 'contain',
+                zIndex: 100,
+              }}
+            />
+            // </View>
+          ))}
+        </View>
       </View>
     );
   }
@@ -114,6 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    backgroundColor: 'blue',
+    margin: 25,
   },
 });

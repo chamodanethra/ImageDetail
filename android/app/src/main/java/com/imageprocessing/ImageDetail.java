@@ -30,7 +30,7 @@ public class ImageDetail extends ReactContextBaseJavaModule {
     public static WritableMap map = new WritableNativeMap();
 
     @ReactMethod
-    public void turnOn(String url, Promise promise) {
+    public void getImageCenterCoordinates(String url, Promise promise) {
         Bitmap bmp = null;
         try {
             WritableNativeMap boundaryCoordinates = new WritableNativeMap();
@@ -67,7 +67,7 @@ public class ImageDetail extends ReactContextBaseJavaModule {
             boundaryCoordinates.putInt("endX", endX);
             boundaryCoordinates.putInt("endY", endY);
 
-            Log.d("TAG", "turnOn: " + startX);
+            Log.d("TAG", "getImageCenterCoordinates: " + startX);
             promise.resolve(boundaryCoordinates);
         } catch (IOException e) {
             promise.reject(e);
