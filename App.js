@@ -17,7 +17,7 @@ import {
   Dimensions,
 } from 'react-native';
 
-const objects = ['1', '2', '3', '4', '5'];
+const objects = ['1', '2', '3', '4', '5', '6'];
 
 export default class App extends Component {
   constructor(props) {
@@ -37,7 +37,8 @@ export default class App extends Component {
   setImageURIs = () => {
     if (Platform.OS == 'ios') {
       NativeModules.ImageDetail.setImageURIs(
-        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/car-assemble/`,
+        `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/farm-animals/`,
+        objects.length,
       );
       NativeModules.ImageDetail.getSortedDimensions(
         (error, dimensionsArray) => {
@@ -132,7 +133,7 @@ export default class App extends Component {
             <Image
               key={i}
               source={{
-                uri: `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/car-assemble/icon-${objects[i]}.png`,
+                uri: `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game/farm-animals/icon-${objects[i]}.png`,
               }}
               style={{
                 position: 'absolute',

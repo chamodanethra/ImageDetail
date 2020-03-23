@@ -69,10 +69,10 @@ class ImageDetail: NSObject {
   var imagesCornerCoordinateArray:Array = [[UInt16]]()
   
   @objc
-  func setImageURIs(_ url: NSString) {
+  func setImageURIs(_ url: NSString, withCount: NSNumber) {
 //    print(Date())
     var imageDimensionsArray:Array = [[UInt16]]()
-    for i in 0 ..< 5{
+    for i in 0 ..< Int(truncating: withCount){
       let fullURL = url as String + String(i+1) + ".png"
       guard let imageURL = URL(string: fullURL) else { return }
       guard let imageData = try? Data(contentsOf: imageURL) else { return }
@@ -135,7 +135,7 @@ class ImageDetail: NSObject {
   
   func generateRandomPosition(
     _ depthNumber: Int) {
-    if (depthNumber < 5) {
+    if (depthNumber < imagesArray.count) {
       let nextImageWidth = (imagesWidthArray[depthNumber])
       let nextImageHeight = (imagesSizeArray[depthNumber]) / nextImageWidth
       var isIternationCountExceeded = false
