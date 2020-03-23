@@ -44,7 +44,7 @@ export default class App extends Component {
           this.setState({
             dimensionsArray,
           });
-          console.log('dimensionsArray ', this.state.dimensionsArray);
+          // console.log('dimensionsArray ', this.state.dimensionsArray);
         },
       );
 
@@ -53,10 +53,10 @@ export default class App extends Component {
           this.setState({
             cornerCoordinatesArray,
           });
-          console.log(
-            'cornerCoordinatesArray ',
-            this.state.cornerCoordinatesArray,
-          );
+          // console.log(
+          //   'cornerCoordinatesArray ',
+          //   this.state.cornerCoordinatesArray,
+          // );
         },
       );
     } else if (Platform.OS == 'android') {

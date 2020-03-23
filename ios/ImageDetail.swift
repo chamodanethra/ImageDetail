@@ -30,8 +30,8 @@ class ImagePixelReader {
     self.pointer = pointer
   }
   
-  func alphaAt(x:Int,y:Int)->UInt8{
-    let pixelPosition = (Int(image.size.width) * y * scale + x) * 4 * scale
+  func alphaAt(x:UInt16,y:UInt16)->UInt8{
+    let pixelPosition = (Int(image.size.width) * Int(y) * scale + Int(x)) * 4 * scale
     return pointer[pixelPosition + Pixel.alpha.rawValue]
   }
 }
@@ -39,48 +39,43 @@ class ImagePixelReader {
 @objc(ImageDetail)
 class ImageDetail: NSObject {
   struct ImageAttributes {
-    var startX:Int
-    var startY:Int
-    var endX:Int
-    var endY:Int
-    var rowStartIndex: [Int]
-    var columnStartIndex: [Int]
+    var startX:UInt16
+    var startY:UInt16
+    var endX:UInt16
+    var endY:UInt16
+    var startYArray: [UInt16]
     
     init(
-      startX:Int,
-      startY:Int,
-      endX:Int,
-      endY:Int,
-      rowStartIndex:[Int],
-      columnStartIndex:[Int]
+      startX:UInt16,
+      startY:UInt16,
+      endX:UInt16,
+      endY:UInt16,
+      startYArray:[UInt16]
     ) {
       self.startX = startX
       self.startY = startY
       self.endX = endX
       self.endY = endY
-      self.rowStartIndex = rowStartIndex
-      self.columnStartIndex = columnStartIndex
+      self.startYArray = startYArray
     }
   }
   
   @objc
-  var dimensionsArray:NSArray = [[Int]]() as NSArray
+  var dimensionsArray:NSArray = [[UInt16]]() as NSArray
   
   @objc
-  var cornerCoordinatesArray:NSArray = [[Int]]() as NSArray
+  var cornerCoordinatesArray:NSArray = [[UInt16]]() as NSArray
   
   var availableArray:Array = Array(repeating: Array(repeating: true, count: 325), count: 215)
-  var availableArrayFirstIteration:Array = Array(repeating: Array(repeating: true, count: 325), count: 215)
-  var imagesSizeArray:Array = [Int]()
-  var sortedImagesSizeArray:Array = [Int]()
-  var imagesWidthArray:Array = [Int]()
+  var imagesSizeArray:Array = [UInt16]()
+  var imagesWidthArray:Array = [UInt16]()
   var imagesArray:Array = [[[Bool]]]()
-  var imagesCornerCoordinateArray:Array = [[Int]]()
+  var imagesCornerCoordinateArray:Array = [[UInt16]]()
   
   @objc
   func setImageURIs(_ url: NSString) {
-    //print(Date())
-    var imageDimensionsArray:Array = [[Int]]()
+    print(Date())
+    var imageDimensionsArray:Array = [[UInt16]]()
     for i in 0 ..< 5{
       let fullURL = url as String + String(i+1) + ".png"
       guard let imageURL = URL(string: fullURL) else { return }
@@ -89,136 +84,80 @@ class ImageDetail: NSObject {
       
       //getting all the pixels
       if let reader = ImagePixelReader(image: imageUI) {
-        var imageAttributes = ImageAttributes(startX: -1,startY: Int(imageUI.size.height), endX: 0, endY: 0, rowStartIndex: Array(repeating: -1, count: Int(imageUI.size.height)), columnStartIndex: [])
+        var imageAttributes = ImageAttributes(startX: UInt16(0),startY: UInt16(imageUI.size.height), endX: UInt16(0), endY: UInt16(0), startYArray: [])
         //iterate over all pixels
-        for x in 0 ..< Int(imageUI.size.width){
-          var columnStart = -1
-          var isRowTransparent = true
-          for y in 0 ..< Int(imageUI.size.height){
+        var isFirstPixelFound = false
+        for x in 0 ..< UInt16(imageUI.size.width){
+          var isFirstPixelInColumn = false
+          for y in 0 ..< UInt16(imageUI.size.height){
             let isPixelTransparent = reader.alphaAt(x: x, y: y) == 0
             if !isPixelTransparent {
-              if columnStart == -1 {
-                columnStart = y
+              if !isFirstPixelFound {
+                imageAttributes.startX = x
+                isFirstPixelFound = true
               }
-              if imageAttributes.rowStartIndex[y] == -1 {
-                imageAttributes.rowStartIndex[y] = x
+              imageAttributes.endX = x
+              if !isFirstPixelInColumn {
+                isFirstPixelInColumn = true
+                imageAttributes.startYArray.append(y)
               }
-              //              if x > imageAttributes.endX {
-              //                imageAttributes.endX = x
-              //              }
-              //              if x < imageAttributes.startX {
-              //                imageAttributes.startX = x
-              //              }
-              isRowTransparent = false;
-              if y > imageAttributes.endY {
+              if imageAttributes.endY <= y {
                 imageAttributes.endY = y
               }
-              if y < imageAttributes.startY {
-                imageAttributes.startY = y
-              }
             }
           }
-          if !isRowTransparent {
-            if imageAttributes.startX == -1 {
-              imageAttributes.startX = x
-            }
-            if (imageAttributes.endX < x) {
-              imageAttributes.endX = x
-            }
-          }
-          imageAttributes.columnStartIndex.append(columnStart)
-        } //x loop ends
+        }//x loop ends
+        imageAttributes.startY = imageAttributes.startYArray.min()!
         
         let maxWidth = imageAttributes.endX + 1 - imageAttributes.startX
         let maxHeight = imageAttributes.endY + 1 - imageAttributes.startY
-        var imageArray = Array(repeating: Array(repeating: false, count: maxHeight), count: maxWidth)
-        for x in 0 ..< Int(imageUI.size.width) {
-          for y in 0 ..< Int(imageUI.size.height){
+        var imageArray = Array(repeating: Array(repeating: false, count: Int(maxHeight)), count: Int(maxWidth))
+        for x in imageAttributes.startX ..< imageAttributes.startX + maxWidth {
+          for y in imageAttributes.startY ..< imageAttributes.startY + maxHeight {
             let isPixelTransparent = reader.alphaAt(x: x, y: y) == 0
             if !isPixelTransparent {
-              let indexX = x - imageAttributes.rowStartIndex[y]
-              let indexY = y - imageAttributes.columnStartIndex[x]
+              let indexX = Int(x - imageAttributes.startX)
+              let indexY = Int(y - imageAttributes.startY)
               imageArray[indexX][indexY] = true
             }
           }
         }
         imagesArray.append(imageArray)
         
-        imageDimensionsArray.append([Int(imageAttributes.startX), Int(imageAttributes.endX + 1), Int(imageAttributes.startY), Int(imageAttributes.endY+1)])
-        imagesSizeArray.append((imageAttributes.endX + 1 - imageAttributes.startX) * (imageAttributes.endY + 1 - imageAttributes.startY))
-        
-        imagesWidthArray.append(imageAttributes.endX + 1 - imageAttributes.startX)
+        imageDimensionsArray.append([imageAttributes.startX, imageAttributes.endX + 1, imageAttributes.startY, imageAttributes.endY+1])
+        imagesSizeArray.append(maxWidth * maxHeight)
+        imagesWidthArray.append(maxWidth)
       }
     }
-    
-    sortedImagesSizeArray = imagesSizeArray.map { $0 }.sorted { $0 > $1 }
     dimensionsArray = imageDimensionsArray as NSArray
     
-    //select a corner randomly for positioning the largest image
-    let startRandomCorner = Int.random(in: 0 ..< 3) //includes 3
-    var startX = 0
-    var startY = 0
-    var indices = [0,0,0,0,0]
-    for i in 0..<5  {
-      indices[i] = imagesSizeArray.firstIndex(of: sortedImagesSizeArray[i])!
-    }
-    let imageWidth = imagesWidthArray[indices[0]]
-    let imageHeight = sortedImagesSizeArray[0] / imageWidth
-    if startRandomCorner % 2 == 1 {
-      startX = 215 - imageWidth
-    }
-    if startRandomCorner / 2 >= 1 {
-      startY = 325 - imageHeight
-    }
-    imagesCornerCoordinateArray.append([startX, startY])
-    
-    for x in startX ..< startX + imageWidth{
-      for y in startY ..< startY + imageHeight{
-        let i = x - startX;
-        let j = y - startY;
-        if imagesArray[indices[0]][i][j] {
-          availableArray[x][y] = false
-          availableArrayFirstIteration[x][y] = false
-        }
-      }
-    }
-    
-    generateRandomPosition(1)
-    var unsortedImagesCornerCoordinateArray = [[Int]]()
-    for i in [0,1,2,3,4] {
-      let inverseIndex = indices.firstIndex(of: i) ?? 0
-      unsortedImagesCornerCoordinateArray.append(imagesCornerCoordinateArray[inverseIndex] )
-    }
-    
-    cornerCoordinatesArray = unsortedImagesCornerCoordinateArray as NSArray
-    //print(Date())
+    generateRandomPosition(0)
+    cornerCoordinatesArray = imagesCornerCoordinateArray as NSArray
+    print(Date())
   }
   
   func generateRandomPosition(
     _ depthNumber: Int) {
     if (depthNumber < 5) {
-      guard let nextIndex = imagesSizeArray.firstIndex(of:sortedImagesSizeArray[depthNumber] ) else { return }
-      let nextImageWidth = imagesWidthArray[nextIndex]
-      let nextImageHeight = sortedImagesSizeArray[depthNumber] / nextImageWidth
+      let nextImageWidth = (imagesWidthArray[depthNumber])
+      let nextImageHeight = (imagesSizeArray[depthNumber]) / nextImageWidth
       var isIternationCountExceeded = false
-      var iterationCount = 0
+      var iterationCount:UInt8 = 0
       L1: while true {
         iterationCount += 1
-        let nextRandomNumberX = Int.random(in: 0 ..< (215 - nextImageWidth))
-        let nextRandomNumberY = Int.random(in: 0 ..< (325 - nextImageHeight))
+        let nextRandomNumberX = UInt16.random(in: 0 ..< (215 - nextImageWidth))
+        let nextRandomNumberY = UInt16.random(in: 0 ..< (325 - nextImageHeight))
         
         for x in nextRandomNumberX ..< nextRandomNumberX + nextImageWidth{
+          let i = Int(x - nextRandomNumberX)
           for y in nextRandomNumberY ..< nextRandomNumberY + nextImageHeight{
-            let i = x - nextRandomNumberX;
-            let j = y - nextRandomNumberY;
-            if imagesArray[nextIndex][i][j] && !availableArray[x][y] {
-              if iterationCount <= 100 {
+            let j = Int(y - nextRandomNumberY)
+            if imagesArray[depthNumber][i][j] && !availableArray[Int(x)][Int(y)] {
+              if iterationCount <= 50 {
                 continue L1
               } else { // bring state of all variables to the point where recursion was called for the first time
-                let corner = imagesCornerCoordinateArray[0].map { $0 }
                 imagesCornerCoordinateArray.removeAll()
-                imagesCornerCoordinateArray.append(corner)
-                availableArray = availableArrayFirstIteration.map { $0 }
+                availableArray = Array(repeating: Array(repeating: true, count: 325), count: 215)
                 isIternationCountExceeded = true
                 break L1
               }
@@ -227,11 +166,11 @@ class ImageDetail: NSObject {
         }
         
         for x in nextRandomNumberX ..< nextRandomNumberX + nextImageWidth{
+          let i = Int(x - nextRandomNumberX)
           for y in nextRandomNumberY ..< nextRandomNumberY + nextImageHeight{
-            let i = x - nextRandomNumberX;
-            let j = y - nextRandomNumberY;
-            if imagesArray[nextIndex][i][j] {
-              availableArray[x][y] = false
+            let j = Int(y - nextRandomNumberY)
+            if imagesArray[depthNumber][i][j] {
+              availableArray[Int(x)][Int(y)] = false
             }
           }
         }
@@ -239,7 +178,7 @@ class ImageDetail: NSObject {
         break L1
       }
       if isIternationCountExceeded {
-        generateRandomPosition(1)
+        generateRandomPosition(0)
       } else {
         generateRandomPosition(depthNumber + 1)
       }
