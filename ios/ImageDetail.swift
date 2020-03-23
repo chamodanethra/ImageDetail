@@ -43,20 +43,16 @@ class ImageDetail: NSObject {
     var startY:UInt16
     var endX:UInt16
     var endY:UInt16
-    var startYArray: [UInt16]
-    
     init(
       startX:UInt16,
       startY:UInt16,
       endX:UInt16,
-      endY:UInt16,
-      startYArray:[UInt16]
+      endY:UInt16
     ) {
       self.startX = startX
       self.startY = startY
       self.endX = endX
       self.endY = endY
-      self.startYArray = startYArray
     }
   }
   
@@ -74,7 +70,7 @@ class ImageDetail: NSObject {
   
   @objc
   func setImageURIs(_ url: NSString) {
-    print(Date())
+//    print(Date())
     var imageDimensionsArray:Array = [[UInt16]]()
     for i in 0 ..< 5{
       let fullURL = url as String + String(i+1) + ".png"
@@ -84,7 +80,7 @@ class ImageDetail: NSObject {
       
       //getting all the pixels
       if let reader = ImagePixelReader(image: imageUI) {
-        var imageAttributes = ImageAttributes(startX: UInt16(0),startY: UInt16(imageUI.size.height), endX: UInt16(0), endY: UInt16(0), startYArray: [])
+        var imageAttributes = ImageAttributes(startX: UInt16(0),startY: UInt16(imageUI.size.height), endX: UInt16(0), endY: UInt16(0))
         //iterate over all pixels
         var isFirstPixelFound = false
         for x in 0 ..< UInt16(imageUI.size.width){
@@ -99,7 +95,9 @@ class ImageDetail: NSObject {
               imageAttributes.endX = x
               if !isFirstPixelInColumn {
                 isFirstPixelInColumn = true
-                imageAttributes.startYArray.append(y)
+                if imageAttributes.startY >= y {
+                  imageAttributes.startY = y
+                }
               }
               if imageAttributes.endY <= y {
                 imageAttributes.endY = y
@@ -107,8 +105,7 @@ class ImageDetail: NSObject {
             }
           }
         }//x loop ends
-        imageAttributes.startY = imageAttributes.startYArray.min()!
-        
+
         let maxWidth = imageAttributes.endX + 1 - imageAttributes.startX
         let maxHeight = imageAttributes.endY + 1 - imageAttributes.startY
         var imageArray = Array(repeating: Array(repeating: false, count: Int(maxHeight)), count: Int(maxWidth))
@@ -133,7 +130,7 @@ class ImageDetail: NSObject {
     
     generateRandomPosition(0)
     cornerCoordinatesArray = imagesCornerCoordinateArray as NSArray
-    print(Date())
+//    print(Date())
   }
   
   func generateRandomPosition(
