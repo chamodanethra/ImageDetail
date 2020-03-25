@@ -183,12 +183,12 @@ class ImageDetail: NSObject {
   }
   
   @objc
-  func getSortedDimensions(_ callback: RCTResponseSenderBlock) {
+  func getDimensions(_ callback: RCTResponseSenderBlock) {
     callback([NSNull(), dimensionsArray])
   }
   
   @objc
-  func getSortedCornerCoordinates(_ callback: RCTResponseSenderBlock) {
+  func getCornerCoordinates(_ callback: RCTResponseSenderBlock) {
     callback([NSNull(), cornerCoordinatesArray])
   }
   

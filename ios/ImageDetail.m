@@ -10,6 +10,6 @@
 
 @interface RCT_EXTERN_MODULE(ImageDetail, NSObject)
 RCT_EXTERN_METHOD(setImageURIs: (NSString* __nonnull)url withCount: (NSNumber* __nonnull)objectsCount)
-RCT_EXTERN_METHOD(getSortedDimensions: (RCTResponseSenderBlock)callback)
-RCT_EXTERN_METHOD(getSortedCornerCoordinates: (RCTResponseSenderBlock)callback)
+RCT_EXTERN_METHOD(getDimensions: (RCTResponseSenderBlock)callback)
+RCT_EXTERN_METHOD(getCornerCoordinates: (RCTResponseSenderBlock)callback)
 @end
