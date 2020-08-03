@@ -1,0 +1,381 @@
+import React, {PureComponent} from 'react';
+import {Animated, TouchableOpacity, Text, StyleSheet} from 'react-native';
+
+export default class AnimatedCard extends PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      rotateAnimation: new Animated.Value(0),
+      didTimeOut: false,
+      tapState: false,
+      contentVisibleTransition: true,
+    };
+  }
+
+  componentDidMount() {
+    if (this.props.isNewGame && !this.state.didTimeOut) {
+      this.startNewGame();
+    }
+  }
+
+  startNewGame = () => {
+    setTimeout(() => {
+      this.startAnimation();
+    }, 3000);
+  };
+
+  componentDidUpdate() {
+    if (this.props.isGameOver && this.state.didTimeOut) {
+      this.setState({didTimeOut: false});
+    }
+    if (this.props.isNewGame && !this.state.didTimeOut) {
+      this.startNewGame();
+    }
+    if (this.props.incorrectIndex == this.props.gridIndex) {
+      this.startAnimation();
+    }
+  }
+
+  startAnimation = () => {
+    Animated.timing(this.state.rotateAnimation, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: false,
+    }).start(() => {
+      this.setState(
+        {
+          contentVisibleTransition: false,
+          didTimeOut: true,
+        },
+        () => {
+          Animated.timing(this.state.rotateAnimation, {
+            toValue: 2,
+            duration: 400,
+            useNativeDriver: false,
+          }).start(() => {
+            this.setState({
+              tapState: true,
+            });
+          });
+        },
+      );
+    });
+  };
+
+  tapAnimation = () => {
+    Animated.timing(this.state.rotateAnimation, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: false,
+    }).start(() => {
+      this.setState({contentVisibleTransition: true}, () => {
+        Animated.timing(this.state.rotateAnimation, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: false,
+        }).start(() => {
+          this.setState(
+            {
+              tapState: true,
+              contentVisibleTransition: false,
+            },
+            () => {
+              this.props.onTapCard(this.props.gridIndex);
+            },
+          );
+        });
+      });
+    });
+  };
+
+  onPressAnimatedCard = () => {
+    if (
+      this.state.tapState &&
+      !(this.props.isCompleted || this.props.isTapped) &&
+      this.state.didTimeOut
+    ) {
+      this.setState({tapState: false}, () => {
+        this.tapAnimation();
+      });
+    }
+  };
+
+  render() {
+    const rotateInterpolate = this.state.rotateAnimation.interpolate({
+      inputRange: [0, 2],
+      outputRange: ['0deg', '180deg'],
+    });
+    const animatedStyles = {transform: [{rotateY: rotateInterpolate}]};
+
+    if (this.props.gridIndex == 0) {
+      // console.log('xxx');
+    }
+
+    let childComponent =
+      typeof this.props.child == 'number' ? (
+        <Text style={styles.text}>{this.props.child}</Text>
+      ) : (
+        <Image source={{uri: this.props.child}} />
+      );
+    return (
+      <TouchableOpacity
+        style={styles.item}
+        activeOpacity={0.7}
+        onPress={this.onPressAnimatedCard}>
+        <Animated.View style={[styles.thumbWrapper, animatedStyles]}>
+          {!this.state.didTimeOut ||
+          this.props.isTapped ||
+          this.props.isCompleted ||
+          this.state.contentVisibleTransition ||
+          this.props.incorrectIndex == this.props.gridIndex ||
+          this.props.isGameOver ? (
+            childComponent
+          ) : (
+            <Text style={styles.invertedText}>?</Text>
+          )}
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+  item: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    // flex: 1,
+    margin: 7.5,
+    borderRadius: 9,
+    backgroundColor: 'red',
+  },
+  itemInvisible: {
+    backgroundColor: 'transparent',
+  },
+  thumbWrapper: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'blue',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderLeftColor: 'purple',
+    borderLeftWidth: 5,
+  },
+  text: {
+    fontSize: 75,
+    fontWeight: 'bold',
+  },
+  invertedText: {
+    fontSize: 75,
+    fontWeight: 'bold',
+    transform: [{rotateY: '180deg'}],
+  },
+});
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+import React, {PureComponent} from 'react';
+import {
+  StyleSheet,
+  View,
+  Dimensions,
+  ImageBackground,
+  StatusBar,
+} from 'react-native';
+
+import AnimatedCard from './AnimatedCard';
+
+class MemoryGameScreen extends PureComponent {
+  constructor(props) {
+    super(props);
+    this.gameObjects = props.gameData.gameObjects;
+
+    let randomArray = [];
+    for (let i = 0; i < numColumns * numRows; i++) {
+      randomArray.push(i);
+    }
+    this.shuffleArray(randomArray);
+    this.state = {
+      iterationCount: 0,
+      keyArray: [],
+      randomArray,
+      isGameOver: false,
+      isNewGame: true,
+      lastTwoTapIndices: [],
+      completedArray: [],
+      incorrectIndex: -1,
+    };
+  }
+
+  shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.state.iterationCount === this.state.randomArray.length) {
+      setTimeout(() => {
+        this.setState({
+          isGameOver: true,
+          completedArray: [],
+          iterationCount: 0,
+        });
+      }, 2000);
+    }
+  }
+
+  onTapCard = index => {
+    if (this.state.lastTwoTapIndices.length == 0) {
+      this.setState({
+        lastTwoTapIndices: [index],
+        isNewGame: false,
+        incorrectIndex: -1,
+      });
+    } else if (this.state.lastTwoTapIndices.length == 1) {
+      if (
+        this.state.randomArray[this.state.lastTwoTapIndices[0]] %
+          ((numColumns * numRows) / 2) ==
+        this.state.randomArray[index] % ((numColumns * numRows) / 2)
+      ) {
+        let currentCompletedArray = [...this.state.completedArray];
+        currentCompletedArray.push(this.state.lastTwoTapIndices[0]);
+        currentCompletedArray.push(index);
+
+        this.setState({
+          lastTwoTapIndices: [],
+          iterationCount: this.state.iterationCount + 2,
+          completedArray: currentCompletedArray,
+          incorrectIndex: -1,
+        });
+      } else {
+        let incorrectIndex = this.state.lastTwoTapIndices[0];
+        this.setState(
+          {
+            incorrectIndex: incorrectIndex,
+            lastTwoTapIndices: [index],
+          },
+          () => {
+            setTimeout(() => {
+              this.setState({incorrectIndex: -1});
+            }, 400);
+          },
+        );
+      }
+    }
+  };
+
+  startNewGame = () => {
+    let randomArray = [];
+    for (let i = 0; i < numColumns * numRows; i++) {
+      randomArray.push(i);
+    }
+    this.shuffleArray(randomArray);
+    this.setState({
+      iterationCount: 0,
+      keyArray: [],
+      randomArray,
+      isGameOver: false,
+      isNewGame: true,
+      lastTwoTapIndices: [],
+      completedArray: [],
+      incorrectIndex: -1,
+    });
+  };
+  render() {
+    console.log(this.state.incorrectIndex);
+    let imageUriSlice = this.props.gameData.imageUriSlice
+      ? this.props.gameData.imageUriSlice
+      : 0;
+    return (
+      <View style={{backgroundColor: 'yellow', height: '100%', width: '100%'}}>
+        <StatusBar hidden />
+        <View style={styles.mainContainer}>
+          <View style={styles.gameArea}>
+            <View style={styles.wrapper}>
+              {[0, 1, 2].map(e => {
+                return (
+                  <View
+                    key={e}
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                    }}>
+                    {[0, 1, 2, 3].map(f => {
+                      return (
+                        <View
+                          key={f}
+                          style={{
+                            flex: 1,
+                          }}>
+                          <AnimatedCard
+                            gridIndex={numColumns * e + f}
+                            child={
+                              imageUriSlice +
+                              this.gameObjects[
+                                this.state.randomArray[numColumns * e + f] %
+                                  ((numColumns * numRows) / 2)
+                              ]
+                            }
+                            onTapCard={this.onTapCard}
+                            isTapped={this.state.lastTwoTapIndices.includes(
+                              numColumns * e + f,
+                            )}
+                            isCompleted={this.state.completedArray.includes(
+                              numColumns * e + f,
+                            )}
+                            incorrectIndex={this.state.incorrectIndex}
+                            isGameOver={this.state.isGameOver}
+                            isNewGame={this.state.isNewGame}
+                          />
+                        </View>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
+}
+
+const numColumns = 4; // update styling values also if this is modified;
+const numRows = 3; // update styling values also if this is modified;
+
+const styles = StyleSheet.create({
+  mainContainer: {
+    padding: 25,
+    flex: 1,
+    flexDirection: 'row',
+    position: 'relative',
+  },
+  gameArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  wrapper: {
+    flexDirection: 'column',
+    width: '75%',
+    height: '95%',
+    alignSelf: 'center',
+  },
+
+  text: {
+    fontSize: 75,
+    fontWeight: 'bold',
+  },
+});
+
+const availableHeight = Dimensions.get('window').height - 25 * 2;
+const availableWidth = Dimensions.get('window').width - 25 * 2;
+const mainContainerDimensions = {
+  height: Math.min(availableHeight, availableWidth),
+  width: Math.max(availableHeight, availableWidth),
+};
+
+export default MemoryGameScreen;
