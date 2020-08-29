@@ -11,6 +11,9 @@ import {StyleSheet, View, NativeModules, Image} from 'react-native';
 import TestSortingScreen from './TestSortingScreen';
 import MemoryGameScreen from './MemoryGameScreen';
 import BuildAToyScreen from './BuildAToyScreen';
+import AttachmentFlatList from './AttachmentFlatList';
+import AttachmentsContainer from './AttachmentsContainer';
+import Test from './src/Test';
 
 const objects = ['1', '2', '3', '4', '5', '6'];
 
@@ -22,10 +25,10 @@ export default class App extends Component {
     //   cornerCoordinatesArray: [],
     //   height: 0,
     // };
-    NativeModules.ImageDetail.setImageURIs(
-      `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game`,
-      [5, 6, 6, 5, 5, 5, 5, 5, 4, 5, 4, 5],
-    );
+    // NativeModules.ImageDetail.setImageURIs(
+    //   `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game`,
+    //   [5, 6, 6, 5, 5, 5, 5, 5, 4, 5, 4, 5],
+    // );
   }
 
   // getAdjustedWidth = () => {
@@ -37,15 +40,15 @@ export default class App extends Component {
   // };
 
   render() {
-    return (
-      <BuildAToyScreen
-        gameIndex={53}
-        gameData={{
-          objectsCountsArray: [5, 6, 6, 5, 5, 5, 5, 5, 4, 5, 4, 5],
-          imageUriSlice: `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game`,
-        }}
-      />
-    );
+    return <AttachmentsContainer />;
+    //   <BuildAToyScreen
+    //     gameIndex={53}
+    //     gameData={{
+    //       objectsCountsArray: [5, 6, 6, 5, 5, 5, 5, 5, 4, 5, 4, 5],
+    //       imageUriSlice: `https://la-frontend.s3-ap-southeast-1.amazonaws.com/images/build-game`,
+    //     }}
+    //   />
+    // );
     // return (
     //   <View style={styles.container}>
     //     <View style={{width: 215, height: 325, backgroundColor: 'red'}}>
